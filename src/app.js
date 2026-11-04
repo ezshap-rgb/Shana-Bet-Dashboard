@@ -28,6 +28,7 @@ const state = {
   klalCategoryFilter: 'all',
   activeCol3Tab: 'klal', // 'klal' | 'hospitality'
   isCol1Open: true,
+  isCol2Open: true,
   isCol3Open: true,
   isEditingPinned: false,
   isLoading: false,
@@ -69,8 +70,11 @@ const elements = {
   tabCountAgenda: document.getElementById('tab-count-agenda'),
   filterButtons: document.querySelectorAll('.filter-tab-btn'),
 
-  // Column 2: Dossier
+  // Column 2: Dossier & Collapsed strip
   colDossier: document.getElementById('col-dossier'),
+  colDossierCollapsed: document.getElementById('col-dossier-collapsed'),
+  miniStudentBadge: document.getElementById('mini-student-badge'),
+  miniStudentName: document.getElementById('mini-student-name'),
   dossierHeaderContainer: document.getElementById('dossier-header-container'),
   dossierBodyContainer: document.getElementById('dossier-body-container'),
 
@@ -208,6 +212,22 @@ function closePromptModal() {
 }
 
 /**
+ * Adjust Column 3 width dynamically:
+ * If Column 2 (Student Dossier) is collapsed and Column 3 is open,
+ * Column 3 expands to full remaining width (flex-1) so the counselor can focus solely on Group & Klal!
+ */
+function adjustColumnWidths() {
+  if (!elements.colKlal) return;
+  if (!state.isCol2Open && state.isCol3Open) {
+    elements.colKlal.classList.remove('w-[370px]', '2xl:w-[410px]', 'flex-none');
+    elements.colKlal.classList.add('flex-1', 'min-w-0');
+  } else {
+    elements.colKlal.classList.remove('flex-1', 'min-w-0');
+    elements.colKlal.classList.add('w-[370px]', '2xl:w-[410px]', 'flex-none');
+  }
+}
+
+/**
  * Toggle Column 1 (Left: Students)
  */
 function toggleCol1(shouldOpen = !state.isCol1Open) {
@@ -221,6 +241,36 @@ function toggleCol1(shouldOpen = !state.isCol1Open) {
     elements.colStudentsCollapsed.classList.remove('hidden');
     elements.colStudentsCollapsed.classList.add('flex');
   }
+  adjustColumnWidths();
+  updateLayoutPresetButtons();
+  refreshIcons();
+}
+
+/**
+ * Toggle Column 2 (Center: Student Dossier)
+ */
+function toggleCol2(shouldOpen = !state.isCol2Open) {
+  state.isCol2Open = shouldOpen;
+  if (state.isCol2Open) {
+    elements.colDossier.classList.remove('hidden');
+    elements.colDossier.classList.add('flex');
+    elements.colDossierCollapsed.classList.add('hidden');
+    elements.colDossierCollapsed.classList.remove('flex');
+  } else {
+    elements.colDossier.classList.add('hidden');
+    elements.colDossier.classList.remove('flex');
+    elements.colDossierCollapsed.classList.remove('hidden');
+    elements.colDossierCollapsed.classList.add('flex');
+  }
+
+  // Update mini badge on collapsed strip
+  const student = state.data.students.find(s => s.id === state.selectedStudentId);
+  if (student) {
+    if (elements.miniStudentBadge) elements.miniStudentBadge.textContent = student.id;
+    if (elements.miniStudentName) elements.miniStudentName.textContent = student.name;
+  }
+
+  adjustColumnWidths();
   updateLayoutPresetButtons();
   refreshIcons();
 }
@@ -239,6 +289,7 @@ function toggleCol3(shouldOpen = !state.isCol3Open) {
     elements.colKlalCollapsed.classList.remove('hidden');
     elements.colKlalCollapsed.classList.add('flex');
   }
+  adjustColumnWidths();
   updateLayoutPresetButtons();
   refreshIcons();
 }
@@ -249,20 +300,23 @@ function toggleCol3(shouldOpen = !state.isCol3Open) {
 function setLayoutPreset(preset) {
   if (preset === 'all') {
     toggleCol1(true);
+    toggleCol2(true);
     toggleCol3(true);
   } else if (preset === 'focus-student') {
     toggleCol1(false);
+    toggleCol2(true);
     toggleCol3(false);
   } else if (preset === 'focus-klal') {
     toggleCol1(false);
+    toggleCol2(false);
     toggleCol3(true);
   }
 }
 
 function updateLayoutPresetButtons() {
-  const isAll = state.isCol1Open && state.isCol3Open;
-  const isFocusStudent = !state.isCol1Open && !state.isCol3Open;
-  const isFocusKlal = !state.isCol1Open && state.isCol3Open;
+  const isAll = state.isCol1Open && state.isCol2Open && state.isCol3Open;
+  const isFocusStudent = !state.isCol1Open && state.isCol2Open && !state.isCol3Open;
+  const isFocusKlal = !state.isCol1Open && !state.isCol2Open && state.isCol3Open;
 
   const btnClassesActive = 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-semibold';
   const btnClassesInactive = 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium';
@@ -618,8 +672,11 @@ function renderStudentDossier() {
           ${student.shabbosNotes ? `<span>(${student.shabbosNotes})</span>` : ''}
         </p>
       </div>
-      <div>
+      <div class="flex items-center gap-1.5">
         ${urgencyPill}
+        <button id="btn-collapse-col2" class="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition cursor-pointer" title="Collapse Student Dossier (Focus on Group & Klal)">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        </button>
       </div>
     </div>
 
@@ -886,7 +943,12 @@ function renderStudentDossier() {
     ${timelineHtml}
   `;
 
+  // Update mini badge for collapsed state
+  if (elements.miniStudentBadge) elements.miniStudentBadge.textContent = student.id;
+  if (elements.miniStudentName) elements.miniStudentName.textContent = student.name;
+
   // Attach button event handlers in Dossier
+  const btnCollapseCol2 = document.getElementById('btn-collapse-col2');
   const btnMarkMetToday = document.getElementById('btn-mark-met-today');
   const btnOpenLogMeeting = document.getElementById('btn-open-log-meeting');
   const btnClearAgenda = document.getElementById('btn-clear-agenda');
@@ -897,6 +959,10 @@ function renderStudentDossier() {
   const btnDraftUpdate = document.getElementById('btn-draft-update');
   const btnShabbosInvite = document.getElementById('btn-shabbos-invite');
   const btnPreviewPrompt = document.getElementById('btn-preview-current-prompt');
+
+  if (btnCollapseCol2) {
+    btnCollapseCol2.addEventListener('click', () => toggleCol2(false));
+  }
 
   // Direct Action: Mark Met Today
   if (btnMarkMetToday) {
@@ -1647,6 +1713,9 @@ function setupEventListeners() {
   // Column 1 collapse / expand
   elements.btnCollapseCol1.addEventListener('click', () => toggleCol1(false));
   elements.colStudentsCollapsed.addEventListener('click', () => toggleCol1(true));
+
+  // Column 2 collapse / expand
+  elements.colDossierCollapsed.addEventListener('click', () => toggleCol2(true));
 
   // Column 3 collapse / expand
   elements.btnCollapseCol3.addEventListener('click', () => toggleCol3(false));
