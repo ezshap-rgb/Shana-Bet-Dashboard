@@ -29,7 +29,19 @@ import {
   UserPlus,
   Zap,
   Plus,
-  Loader2
+  Loader2,
+  Sun,
+  Moon,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
+  PlusCircle,
+  Pencil,
+  Columns,
+  PanelLeft,
+  PanelRight,
+  Save
 } from 'lucide';
 
 const iconMap = {
@@ -62,10 +74,21 @@ const iconMap = {
   'user-plus': UserPlus,
   zap: Zap,
   plus: Plus,
-  'loader-2': Loader2
+  'loader-2': Loader2,
+  sun: Sun,
+  moon: Moon,
+  'chevron-left': ChevronLeft,
+  'chevron-right': ChevronRight,
+  'maximize-2': Maximize2,
+  'minimize-2': Minimize2,
+  'plus-circle': PlusCircle,
+  pencil: Pencil,
+  columns: Columns,
+  'panel-left': PanelLeft,
+  'panel-right': PanelRight,
+  save: Save
 };
 
 export function initIcons() {
   createIcons({ icons: iconMap });
 }
-

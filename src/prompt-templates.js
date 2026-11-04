@@ -26,7 +26,7 @@ Agreed Next Steps: ${log.nextSteps || 'None noted'}`;
 I am preparing for an upcoming 1-on-1 guidance meeting with:
 • Student Name: ${student.name}
 • Student ID: ${student.id}
-• Shiur / Cohort: ${student.shiur || 'Shana Bet'}
+• Shiur / Group: ${student.shiur || 'Shana Bet'}
 • Days Elapsed Since Last Meeting: ${student.urgency.displayDays} (Last met: ${student.lastMetFormatted})
 • Shabbat Hospitality: ${shabbosInfo}
 
@@ -92,24 +92,24 @@ Draft two distinct, ready-to-refine updates:
 }
 
 /**
- * 3. Cohort Macro Report Prompt (Hanhala Executive Briefing)
+ * 3. Group Macro Report Prompt (Hanhala Executive Briefing)
  */
-export function generateCohortReportPrompt(stats, activeKlal = [], priorityStudents = []) {
+export function generateGroupReportPrompt(stats, activeKlal = [], priorityStudents = []) {
   const initiativesList = activeKlal.length > 0
     ? activeKlal.map((k, i) => {
         return `${i + 1}. [${k.category}] ${k.title} (Timing: ${k.targetTiming})
    • Vision: ${k.vision}
    • Action Plan: ${k.actionPlan}`;
       }).join('\n\n')
-    : 'No active cohort initiatives currently logged.';
+    : 'No active group initiatives currently logged.';
 
   const priorityList = priorityStudents.slice(0, 8).map(s => {
     return `• ${s.name} (${s.id}) - ${s.urgency.displayDays}${s.hasAgenda ? ' [Has Pending Agenda]' : ''} - Shabbat Meals: ${s.shabbosCount}`;
   }).join('\n');
 
-  return `You are an executive educational and guidance consultant conducting a comprehensive cohort analysis for the Yeshiva Hanhala (Leadership Meeting) regarding the Shana Bet class.
+  return `You are an executive educational and guidance consultant conducting a comprehensive group analysis for the Yeshiva Hanhala (Leadership Meeting) regarding the Shana Bet class.
 
---- COHORT TRIAGE & WELLBEING METRICS ---
+--- GROUP TRIAGE & WELLBEING METRICS ---
 • Total Student Body: ${stats.totalStudents} students
 • Met in Last 7 Days: ${stats.metThisWeek} students (${Math.round((stats.metThisWeek / (stats.totalStudents || 1)) * 100)}%)
 • 🔴 Critical Overdue (>30 days / Never Met): ${stats.overdueCritical} students
@@ -125,15 +125,18 @@ export function generateCohortReportPrompt(stats, activeKlal = [], priorityStude
 --- TOP PRIORITY STUDENTS NEEDING IMMEDIATE OUTREACH ---
 ${priorityList}
 
---- ACTIVE KLAL COHORT INITIATIVES ---
+--- ACTIVE KLAL GROUP INITIATIVES ---
 ${initiativesList}
 
 --- YOUR TASK ---
-Generate a high-level Executive Cohort Status Briefing for the Rosh Yeshiva and Guidance Staff:
-1. Executive Health Assessment: Macro evaluation of cohort momentum, pastoral coverage, and triage bottlenecks.
+Generate a high-level Executive Group Status Briefing for the Rosh Yeshiva and Guidance Staff:
+1. Executive Health Assessment: Macro evaluation of group momentum, pastoral coverage, and triage bottlenecks.
 2. 7-Day Action Plan: Concrete allocation of counselor hours to reach the overdue and 0-meal students before the upcoming Shabbat.
 3. Klal Initiatives Optimization: Strategic review of the active educational and programming projects—recommend next milestones and faculty responsibilities.`;
 }
+
+// Backwards compatibility export
+export const generateCohortReportPrompt = generateGroupReportPrompt;
 
 /**
  * 4. Shabbat Hospitality Invitation Prompt
@@ -148,4 +151,3 @@ Compose a warm, natural personal WhatsApp / SMS message to invite this Shana Bet
 
 Tone: Warm, low-pressure, welcoming, feeling like a natural personal invitation rather than an institutional check-off.`;
 }
-
