@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shana Bet Guidance Command Center</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z'/></svg>" />
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+<body class="h-full flex flex-col overflow-hidden text-slate-100 font-sans selection:bg-sky-500/30 selection:text-sky-200">
+
+  <!-- ================= TOP HEADER BAR ================= -->
+  <header class="flex-none border-b border-slate-800/80 bg-slate-900/95 backdrop-blur px-5 py-3 z-20 shadow-md">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-sky-600 via-indigo-600 to-amber-500 p-0.5 shadow-lg shadow-sky-950/50 flex items-center justify-center">
+          <div class="h-full w-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+            <i data-lucide="compass" class="w-5 h-5 text-sky-400"></i>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+              Shana Bet Guidance Command Center
+            </h1>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+              5787 • 2026-2027
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Desktop Triage, Student Dossiers & Gemini Chrome Copilot Hub</p>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Header Pill -->
+      <div class="hidden xl:flex items-center gap-2 bg-slate-950/70 p-1.5 rounded-xl border border-slate-800">
+        
+        <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-900/80 border border-slate-800/60">
+          <span class="text-[11px] font-medium text-slate-400">Cohort:</span>
+          <span id="stat-total-students" class="text-xs font-bold text-white font-mono">69</span>
+        </div>
+
+        <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-950/30 border border-emerald-500/20 text-emerald-300">
+          <i data-lucide="calendar-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span class="text-[11px] font-medium text-slate-300">Met This Week:</span>
+          <span id="stat-met-week" class="text-xs font-bold text-emerald-400 font-mono">--</span>
+        </div>
+
+        <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-rose-950/30 border border-rose-500/20 text-rose-300">
+          <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-rose-400"></i>
+          <span class="text-[11px] font-medium text-slate-300">Overdue (&gt;21d):</span>
+          <span id="stat-overdue" class="text-xs font-bold text-rose-400 font-mono">--</span>
+        </div>
+
+        <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-amber-950/30 border border-amber-500/20 text-amber-300">
+          <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span class="text-[11px] font-medium text-slate-300">Agendas Waiting:</span>
+          <span id="stat-agendas" class="text-xs font-bold text-amber-400 font-mono">--</span>
+        </div>
+
+        <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-indigo-950/30 border border-indigo-500/20 text-indigo-300">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span class="text-[11px] font-medium text-slate-300">Active Klal:</span>
+          <span id="stat-active-klal" class="text-xs font-bold text-indigo-400 font-mono">--</span>
+        </div>
+
+      </div>
+
+      <!-- Actions & Sync Status -->
+      <div class="flex items-center gap-3">
+        
+        <!-- Live / Sync Status Indicator -->
+        <div id="sync-status-indicator" class="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 text-xs">
+          <span id="sync-dot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="sync-text" class="text-[11px] font-medium">Ready</span>
+        </div>
+
+        <!-- Refresh Button -->
+        <button id="btn-refresh" title="Fetch fresh updates from Google Sheet" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs font-medium border border-slate-700 transition cursor-pointer shadow-sm">
+          <i data-lucide="refresh-cw" id="refresh-icon" class="w-3.5 h-3.5 text-sky-400"></i>
+          <span>Refresh Data</span>
+        </button>
+
+        <!-- Side Panel Widescreen Guide Badge -->
+        <div class="hidden 2xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-sky-950/40 border border-sky-500/30 text-sky-300 text-[11px]" title="Layout engineered for desktop monitors with the Gemini Chrome Side Panel open at 400px width">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-sky-400"></i>
+          <span>Gemini Panel Ready</span>
+        </div>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= MAIN 3-COLUMN WORKSPACE ================= -->
+  <main class="flex-1 min-h-0 flex overflow-hidden bg-slate-950">
+
+    <!-- ================= COLUMN 1: ATTENTION RADAR (LEFT) ================= -->
+    <section class="w-[360px] 2xl:w-[390px] flex-none flex flex-col border-r border-slate-800/80 bg-slate-900/60 backdrop-blur-sm overflow-hidden">
+      
+      <!-- Column 1 Header & Search -->
+      <div class="p-3.5 border-b border-slate-800 space-y-3 bg-slate-900/90">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="activity" class="w-4 h-4 text-rose-400"></i>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Attention Radar</h2>
+          </div>
+          <span id="filtered-students-count" class="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono font-medium">
+            69 students
+          </span>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input 
+            type="text" 
+            id="search-students-input" 
+            placeholder="Search student, ID, or agenda..." 
+            class="w-full bg-slate-950 border border-slate-700/80 rounded-lg pl-9 pr-8 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
+          />
+          <button id="clear-search-btn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+
+        <!-- Urgency Radar Filter Pills -->
+        <div class="flex items-center gap-1 overflow-x-auto pb-0.5 text-[11px]">
+          <button data-filter="all" class="filter-tab-btn active px-2.5 py-1 rounded-md font-medium transition cursor-pointer bg-sky-600 text-white shadow-sm">
+            All (<span id="tab-count-all">69</span>)
+          </button>
+          <button data-filter="critical" class="filter-tab-btn px-2.5 py-1 rounded-md font-medium transition cursor-pointer bg-slate-800 text-rose-300 hover:bg-slate-700">
+            🔴 Critical (<span id="tab-count-critical">--</span>)
+          </button>
+          <button data-filter="attention" class="filter-tab-btn px-2.5 py-1 rounded-md font-medium transition cursor-pointer bg-slate-800 text-amber-300 hover:bg-slate-700">
+            🟡 Attention (<span id="tab-count-attention">--</span>)
+          </button>
+          <button data-filter="recent" class="filter-tab-btn px-2.5 py-1 rounded-md font-medium transition cursor-pointer bg-slate-800 text-emerald-300 hover:bg-slate-700">
+            🟢 Recent (<span id="tab-count-recent">--</span>)
+          </button>
+          <button data-filter="agenda" class="filter-tab-btn px-2.5 py-1 rounded-md font-medium transition cursor-pointer bg-slate-800 text-amber-400 hover:bg-slate-700" title="Only students with pending next agenda items">
+            💡 Agenda (<span id="tab-count-agenda">--</span>)
+          </button>
+        </div>
+
+        <!-- Sort Select Bar -->
+        <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+          <span class="flex items-center gap-1">
+            <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-500"></i>
+            Sort by:
+          </span>
+          <select id="student-sort-select" class="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-sky-500 cursor-pointer">
+            <option value="urgency-desc">Most Overdue First</option>
+            <option value="agenda-first">Pending Agendas First</option>
+            <option value="name-asc">Student Name (A → Z)</option>
+            <option value="id-asc">Student ID (S01 → S69)</option>
+            <option value="shabbos-asc">Shabbat Meals (Least First)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Student Cards List -->
+      <div id="student-list-container" class="flex-1 overflow-y-auto divide-y divide-slate-800/60 p-2 space-y-1.5">
+        <!-- Rendered dynamically by app.js -->
+        <div class="flex items-center justify-center p-8 text-slate-500 text-xs">
+          Loading student radar...
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= COLUMN 2: INTERACTIVE STUDENT DOSSIER (CENTER) ================= -->
+    <section class="flex-1 min-w-[420px] flex flex-col bg-slate-950 overflow-hidden border-r border-slate-800/80">
+      
+      <!-- Student Dossier Header (Dynamic) -->
+      <div id="dossier-header-container" class="p-4 border-b border-slate-800 bg-slate-900/70">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+
+      <!-- Student Dossier Content Body -->
+      <div id="dossier-body-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+
+    </section>
+
+    <!-- ================= COLUMN 3: KLAL INITIATIVES & HOSPITALITY MATRIX (RIGHT) ================= -->
+    <section class="w-[380px] 2xl:w-[420px] flex-none flex flex-col bg-slate-900/60 backdrop-blur-sm overflow-hidden">
+      
+      <!-- Column 3 Header & Tabs -->
+      <div class="p-3.5 border-b border-slate-800 space-y-3 bg-slate-900/90">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Cohort & Hospitality</h2>
+          </div>
+          <button id="btn-cohort-report" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white text-[11px] font-semibold shadow-sm transition active:scale-95 cursor-pointer">
+            <i data-lucide="sparkles" class="w-3 h-3 text-sky-200"></i>
+            <span>Generate Cohort Report</span>
+          </button>
+        </div>
+
+        <!-- Sub Tabs: Klal Initiatives vs Shabbat Matrix -->
+        <div class="grid grid-cols-2 p-1 bg-slate-950 rounded-lg border border-slate-800 text-xs">
+          <button id="col3-tab-klal" class="col3-tab active py-1.5 rounded-md font-semibold text-center transition cursor-pointer bg-slate-800 text-white shadow-sm flex items-center justify-center gap-1.5">
+            <i data-lucide="target" class="w-3.5 h-3.5 text-indigo-400"></i>
+            <span>Klal Macro Board</span>
+          </button>
+          <button id="col3-tab-hospitality" class="col3-tab py-1.5 rounded-md font-medium text-center transition cursor-pointer text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5">
+            <i data-lucide="utensils" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span>Shabbat Hospitality</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab Content 1: Klal Macro Board -->
+      <div id="klal-tab-content" class="flex-1 flex flex-col overflow-hidden">
+        
+        <!-- Filters for Klal -->
+        <div class="p-2.5 border-b border-slate-800/80 bg-slate-950/60 flex items-center justify-between gap-2 text-[11px]">
+          <!-- Status filter -->
+          <div class="flex items-center gap-1">
+            <span class="text-slate-400">Status:</span>
+            <select id="klal-status-filter" class="bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-slate-200 focus:outline-none">
+              <option value="all">All</option>
+              <option value="active" selected>Active</option>
+              <option value="backlog">Backlog</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+
+          <!-- Category filter -->
+          <div class="flex items-center gap-1">
+            <span class="text-slate-400">Domain:</span>
+            <select id="klal-category-filter" class="bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-slate-200 focus:outline-none">
+              <option value="all">All</option>
+              <option value="educational">Educational</option>
+              <option value="programming">Programming</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Klal Cards List -->
+        <div id="klal-cards-container" class="flex-1 overflow-y-auto p-3 space-y-3">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+      </div>
+
+      <!-- Tab Content 2: Shabbat Hospitality Matrix (Hidden by default) -->
+      <div id="hospitality-tab-content" class="hidden flex-1 flex flex-col overflow-hidden">
+        <div id="hospitality-cards-container" class="flex-1 overflow-y-auto p-3.5 space-y-4">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ================= PROMPT PREVIEW MODAL / DIALOG ================= -->
+  <div id="prompt-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 id="prompt-modal-title" class="text-sm font-bold text-white">Gemini Side Panel Prompt Preview</h3>
+            <p class="text-xs text-slate-400">Structured prompt ready to paste into Gemini Chrome Side Panel (Ctrl+V)</p>
+          </div>
+        </div>
+        <button id="close-prompt-modal-btn" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Prompt Text Area -->
+      <div class="flex-1 p-4 overflow-y-auto bg-slate-950">
+        <textarea 
+          id="prompt-modal-textarea" 
+          rows="14" 
+          class="w-full h-full bg-slate-900/80 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 font-mono leading-relaxed focus:outline-none focus:border-sky-500 resize-none selection:bg-sky-500/30"
+          spellcheck="false"
+        ></textarea>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3.5 border-t border-slate-800 bg-slate-900 flex items-center justify-between gap-3">
+        <span class="text-xs text-slate-400 flex items-center gap-1.5">
+          <i data-lucide="info" class="w-3.5 h-3.5 text-sky-400"></i>
+          Click "Copy to Clipboard", then press <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-200 font-mono text-[10px]">Ctrl+V</kbd> in Gemini.
+        </span>
+        <div class="flex items-center gap-2">
+          <button id="cancel-prompt-modal-btn" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition">
+            Close
+          </button>
+          <button id="modal-copy-btn" class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 active:scale-95 text-white text-xs font-semibold shadow-md shadow-sky-950/40 transition cursor-pointer">
+            <i data-lucide="clipboard-copy" class="w-3.5 h-3.5"></i>
+            <span>Copy Prompt</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= TOAST NOTIFICATION CONTAINER ================= -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- App Entry Script -->
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
