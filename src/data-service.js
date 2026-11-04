@@ -1,6 +1,7 @@
 import fallbackData from './fallback-data.json';
 
-const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyPqoLKl-sbwQmewRex_5u8ihj4DBzE-uKHGma_valOC2OdUdZHVD7e3JYBGXkdxjX4Iw/exec?action=getDashboardData';
+const GAS_BASE_URL = 'https://script.google.com/macros/s/AKfycbyPqoLKl-sbwQmewRex_5u8ihj4DBzE-uKHGma_valOC2OdUdZHVD7e3JYBGXkdxjX4Iw/exec';
+const GAS_ENDPOINT = `${GAS_BASE_URL}?action=getDashboardData`;
 const CACHE_KEY = 'shana_bet_dashboard_cache_v2';
 const CACHE_TIME_KEY = 'shana_bet_dashboard_cache_time_v2';
 
@@ -317,8 +318,112 @@ export const DataService = {
     }
   },
 
+  /**
+   * Sends a micro-update to the Google Apps Script Web App.
+   * Uses POST with Content-Type: text/plain;charset=utf-8 to prevent CORS preflight OPTIONS failures.
+   */
+  async sendDirectUpdate(payload) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 16000);
+
+    try {
+      const response = await fetch(GAS_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        redirect: 'follow',
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+      }
+
+      const text = await response.text();
+      let jsonRes = null;
+      try {
+        jsonRes = JSON.parse(text);
+      } catch (e) {
+        // GAS may return HTML or non-JSON if redirect issue occurs
+        console.warn('Response from GAS not valid JSON, raw text length:', text.length);
+      }
+
+      if (jsonRes && jsonRes.status === 'error') {
+        throw new Error(jsonRes.message || 'Error reported by Google Apps Script');
+      }
+
+      return jsonRes || { status: 'success', message: 'Action executed' };
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.error('sendDirectUpdate error:', err);
+      throw err;
+    }
+  },
+
+  /**
+   * Updates local storage cache with current mutated state
+   */
+  saveCurrentStateToCache(data) {
+    try {
+      // Re-encode into the matrix format that parseDashboardData expects
+      const studentHeaders = ["ID","Name","Shiur","PinnedContext","NextAgenda","LastMetDate","LastShabbosDate","ShabbosCount","ShabbosNotes"];
+      const studentRows = data.students.map(s => [
+        s.id,
+        s.name,
+        s.shiur,
+        s.pinnedContext,
+        s.nextAgenda,
+        s.lastMetDate,
+        s.lastShabbosDate,
+        s.shabbosCount,
+        s.shabbosNotes
+      ]);
+
+      const logHeaders = ["Date Logged","StudentID","Name","InteractionType","Summary","NextSteps"];
+      const logRows = data.logs.map(l => [
+        l.date,
+        l.studentId,
+        l.name,
+        l.interactionType,
+        l.summary,
+        l.nextSteps
+      ]);
+
+      const klalHeaders = ["Date Logged","Category","Initiative Title","Core Vision & Underlying Need","Actionable Plan / Next Steps","Status","Target Timing / Zman"];
+      const klalRows = data.klal.map(k => [
+        k.date,
+        k.category,
+        k.title,
+        k.vision,
+        k.actionPlan,
+        k.status,
+        k.targetTiming
+      ]);
+
+      const payload = {
+        status: 'success',
+        action: 'getDashboardData',
+        data: {
+          students: [studentHeaders, ...studentRows],
+          logs: [logHeaders, ...logRows],
+          klal: [klalHeaders, ...klalRows]
+        }
+      };
+
+      localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
+      localStorage.setItem(CACHE_TIME_KEY, new Date().toISOString());
+    } catch (err) {
+      console.warn('Could not update localStorage cache:', err);
+    }
+  },
+
   clearCache() {
     localStorage.removeItem(CACHE_KEY);
     localStorage.removeItem(CACHE_TIME_KEY);
   }
 };
+

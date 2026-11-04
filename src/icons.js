@@ -26,7 +26,10 @@ import {
   MessageSquareOff,
   Calendar,
   BarChart3,
-  UserPlus
+  UserPlus,
+  Zap,
+  Plus,
+  Loader2
 } from 'lucide';
 
 const iconMap = {
@@ -56,9 +59,13 @@ const iconMap = {
   'message-square-off': MessageSquareOff,
   calendar: Calendar,
   'bar-chart-3': BarChart3,
-  'user-plus': UserPlus
+  'user-plus': UserPlus,
+  zap: Zap,
+  plus: Plus,
+  'loader-2': Loader2
 };
 
 export function initIcons() {
   createIcons({ icons: iconMap });
 }
+

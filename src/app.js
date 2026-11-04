@@ -2,7 +2,8 @@ import { initIcons } from './icons.js';
 import { 
   DataService, 
   calculateQuickStats, 
-  formatDate 
+  formatDate,
+  getUrgencyStatus
 } from './data-service.js';
 import { 
   generateMeetingBriefingPrompt, 
@@ -519,34 +520,47 @@ function renderStudentDossier() {
       </div>
     </div>
 
-    <!-- Gemini Copilot Actions Toolbar -->
+    <!-- Action Toolbar (Direct Desktop Actions & Gemini Exporters) -->
     <div class="mt-3.5 pt-3 border-t border-slate-800/80 flex flex-wrap items-center gap-2">
-      <span class="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5 mr-1">
+      
+      <!-- Direct Action 1: Mark Met Today -->
+      <button 
+        id="btn-mark-met-today" 
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-semibold shadow-md shadow-emerald-950/40 transition cursor-pointer"
+        title="Sets Last Met Date to today and shifts student to Recent in Attention Radar"
+      >
+        <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-300"></i>
+        <span>⚡ Mark Met Today</span>
+      </button>
+
+      <span class="text-slate-600">|</span>
+
+      <span class="text-[11px] font-semibold text-slate-400 flex items-center gap-1 mr-0.5">
         <i data-lucide="sparkles" class="w-3.5 h-3.5 text-sky-400"></i>
-        Gemini Copilot:
+        Gemini:
       </span>
 
-      <!-- Action 1: Prep Briefing -->
+      <!-- Action 2: Prep Briefing -->
       <button 
         id="btn-prep-briefing" 
-        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 active:scale-95 text-white text-xs font-semibold shadow-md shadow-sky-950/40 transition cursor-pointer"
+        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 active:scale-95 text-white text-xs font-semibold shadow-md shadow-sky-950/40 transition cursor-pointer"
         title="Synthesizes student's history and copies a briefing prompt for Gemini side panel"
       >
         <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
-        <span>📋 Prep Meeting Briefing</span>
+        <span>📋 Prep Briefing</span>
       </button>
 
-      <!-- Action 2: Draft Parent / Rosh Yeshiva Update -->
+      <!-- Action 3: Draft Parent / Rosh Yeshiva Update -->
       <button 
         id="btn-draft-update" 
-        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-semibold shadow-md shadow-indigo-950/40 transition cursor-pointer"
+        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-semibold shadow-md shadow-indigo-950/40 transition cursor-pointer"
         title="Copies prompt to draft an executive progress update for Rosh Yeshiva & Parents"
       >
         <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
-        <span>📝 Draft Parent / RY Update</span>
+        <span>📝 Draft Update</span>
       </button>
 
-      <!-- Action 3: Shabbos Invite Outreach -->
+      <!-- Action 4: Shabbos Invite Outreach -->
       <button 
         id="btn-shabbos-invite" 
         class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition cursor-pointer"
@@ -594,19 +608,79 @@ function renderStudentDossier() {
             <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400"></i>
             <h3 class="text-xs font-bold text-amber-200 uppercase tracking-wider">Pending Agenda (Unaddressed Ideas Waiting)</h3>
           </div>
-          <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium">
-            Immediate Follow-up
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium">
+              Immediate Follow-up
+            </span>
+            <button 
+              id="btn-clear-agenda" 
+              class="flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-500/20 hover:bg-rose-500/30 text-amber-200 hover:text-rose-200 border border-amber-500/40 hover:border-rose-500/40 text-[11px] font-semibold transition cursor-pointer active:scale-95"
+              title="Clear all pending agenda items and update Sheet"
+            >
+              <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span>✓ Clear Agenda</span>
+            </button>
+          </div>
         </div>
-        <div class="text-xs text-amber-100/90 leading-relaxed whitespace-pre-line pl-1 border-l-2 border-amber-500/50">
+
+        <div class="text-xs text-amber-100/90 leading-relaxed whitespace-pre-line pl-2.5 py-1 border-l-2 border-amber-500/50 bg-amber-950/20 rounded-r-lg">
           ${student.nextAgenda}
         </div>
+
+        <!-- Quick Inline Agenda Adder -->
+        <form id="form-add-agenda" class="mt-3 pt-2.5 border-t border-amber-500/20 flex items-center gap-2">
+          <div class="relative flex-1">
+            <i data-lucide="plus" class="w-3.5 h-3.5 text-amber-400/60 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+            <input 
+              id="input-new-agenda" 
+              type="text" 
+              placeholder="Add next agenda topic (e.g. Discuss chavrusa pacing, sleep routine...)" 
+              class="w-full bg-slate-950/80 border border-amber-500/30 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition"
+              required
+            />
+          </div>
+          <button 
+            type="submit" 
+            id="btn-submit-agenda" 
+            class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 active:scale-95 text-white text-xs font-semibold transition cursor-pointer shadow-sm flex-none"
+          >
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>+ Add</span>
+          </button>
+        </form>
       </div>
     `
     : `
-      <div class="rounded-xl border border-slate-800/60 bg-slate-900/20 p-3 text-slate-500 text-xs flex items-center gap-2">
-        <i data-lucide="check" class="w-4 h-4 text-emerald-500"></i>
-        <span>No urgent pending agenda item recorded. Next meeting will follow natural check-in flow.</span>
+      <div class="rounded-xl border border-slate-800/80 bg-slate-900/40 p-4 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-slate-400">
+            <i data-lucide="check" class="w-4 h-4 text-emerald-500"></i>
+            <span class="text-xs font-medium text-slate-300">No urgent pending agenda item recorded.</span>
+          </div>
+          <span class="text-[10px] text-slate-500 font-mono">Clean Slate</span>
+        </div>
+
+        <!-- Quick Inline Agenda Adder when clean -->
+        <form id="form-add-agenda" class="flex items-center gap-2 pt-1">
+          <div class="relative flex-1">
+            <i data-lucide="plus" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+            <input 
+              id="input-new-agenda" 
+              type="text" 
+              placeholder="Add agenda topic for next meeting (e.g. Chavrusa dynamics, IDF thoughts...)" 
+              class="w-full bg-slate-950 border border-slate-700/80 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 transition"
+              required
+            />
+          </div>
+          <button 
+            type="submit" 
+            id="btn-submit-agenda" 
+            class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 border border-slate-700 text-xs font-medium transition cursor-pointer flex-none"
+          >
+            <i data-lucide="plus" class="w-3.5 h-3.5 text-sky-400"></i>
+            <span>+ Add</span>
+          </button>
+        </form>
       </div>
     `;
 
@@ -677,10 +751,146 @@ function renderStudentDossier() {
   `;
 
   // Attach button event handlers
+  const btnMarkMetToday = document.getElementById('btn-mark-met-today');
+  const btnClearAgenda = document.getElementById('btn-clear-agenda');
+  const formAddAgenda = document.getElementById('form-add-agenda');
   const btnPrepBriefing = document.getElementById('btn-prep-briefing');
   const btnDraftUpdate = document.getElementById('btn-draft-update');
   const btnShabbosInvite = document.getElementById('btn-shabbos-invite');
   const btnPreviewPrompt = document.getElementById('btn-preview-current-prompt');
+
+  // Direct Desktop Action: Mark Met Today
+  if (btnMarkMetToday) {
+    btnMarkMetToday.addEventListener('click', async () => {
+      const prevDate = student.lastMetDate;
+      const prevFormatted = student.lastMetFormatted;
+      const prevDays = student.daysElapsed;
+      const prevUrgency = student.urgency;
+
+      // Optimistic update
+      const nowIso = new Date().toISOString();
+      student.lastMetDate = nowIso;
+      student.lastMetFormatted = formatDate(nowIso);
+      student.daysElapsed = 0;
+      student.urgency = getUrgencyStatus(0);
+
+      renderQuickStats();
+      renderRadarColumn();
+      renderStudentDossier();
+      DataService.saveCurrentStateToCache(state.data);
+
+      showToast(`Saving to Sheet: Marked ${student.name} met today...`, 'success', 2200);
+
+      try {
+        await DataService.sendDirectUpdate({
+          action: 'markMetToday',
+          studentName: student.name
+        });
+        showToast(`✓ Marked ${student.name} met today! Sheet updated.`, 'success');
+      } catch (err) {
+        console.error('Failed to mark met today:', err);
+        // Rollback
+        student.lastMetDate = prevDate;
+        student.lastMetFormatted = prevFormatted;
+        student.daysElapsed = prevDays;
+        student.urgency = prevUrgency;
+
+        renderQuickStats();
+        renderRadarColumn();
+        renderStudentDossier();
+        DataService.saveCurrentStateToCache(state.data);
+
+        showToast(`Could not update Sheet: ${err.message}`, 'error', 5000);
+      }
+    });
+  }
+
+  // Direct Desktop Action: Clear Agenda
+  if (btnClearAgenda) {
+    btnClearAgenda.addEventListener('click', async () => {
+      const prevAgenda = student.nextAgenda;
+      const prevHasAgenda = student.hasAgenda;
+
+      // Optimistic update
+      student.nextAgenda = '';
+      student.hasAgenda = false;
+
+      renderQuickStats();
+      renderRadarColumn();
+      renderStudentDossier();
+      DataService.saveCurrentStateToCache(state.data);
+
+      showToast(`Saving to Sheet: Clearing agenda for ${student.name}...`, 'success', 2200);
+
+      try {
+        await DataService.sendDirectUpdate({
+          action: 'clearAgenda',
+          studentName: student.name
+        });
+        showToast(`✓ Agenda cleared for ${student.name}! Sheet updated.`, 'success');
+      } catch (err) {
+        console.error('Failed to clear agenda:', err);
+        // Rollback
+        student.nextAgenda = prevAgenda;
+        student.hasAgenda = prevHasAgenda;
+
+        renderQuickStats();
+        renderRadarColumn();
+        renderStudentDossier();
+        DataService.saveCurrentStateToCache(state.data);
+
+        showToast(`Could not clear agenda on Sheet: ${err.message}`, 'error', 5000);
+      }
+    });
+  }
+
+  // Direct Desktop Action: Add Agenda Item
+  if (formAddAgenda) {
+    formAddAgenda.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('input-new-agenda');
+      const text = input ? input.value.trim() : '';
+      if (!text) return;
+
+      const prevAgenda = student.nextAgenda;
+      const prevHasAgenda = student.hasAgenda;
+
+      // Optimistic update
+      const bullet = text.startsWith('•') || text.startsWith('-') ? text : `• ${text}`;
+      student.nextAgenda = student.nextAgenda ? `${student.nextAgenda}\n${bullet}` : bullet;
+      student.hasAgenda = true;
+
+      if (input) input.value = '';
+
+      renderQuickStats();
+      renderRadarColumn();
+      renderStudentDossier();
+      DataService.saveCurrentStateToCache(state.data);
+
+      showToast(`Saving to Sheet: Adding agenda for ${student.name}...`, 'success', 2200);
+
+      try {
+        await DataService.sendDirectUpdate({
+          action: 'addIdea',
+          studentName: student.name,
+          idea: text
+        });
+        showToast(`✓ Added agenda topic for ${student.name}! Sheet updated.`, 'success');
+      } catch (err) {
+        console.error('Failed to add idea:', err);
+        // Rollback
+        student.nextAgenda = prevAgenda;
+        student.hasAgenda = prevHasAgenda;
+
+        renderQuickStats();
+        renderRadarColumn();
+        renderStudentDossier();
+        DataService.saveCurrentStateToCache(state.data);
+
+        showToast(`Could not add agenda to Sheet: ${err.message}`, 'error', 5000);
+      }
+    });
+  }
 
   if (btnPrepBriefing) {
     btnPrepBriefing.addEventListener('click', () => {
@@ -748,11 +958,25 @@ function renderKlalInitiatives() {
       ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/30">Educational</span>`
       : `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/30">Programming</span>`;
 
-    const statusBadge = item.isActive
-      ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Active</span>`
-      : item.isCompleted
-      ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">Completed</span>`
-      : `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30">Backlog</span>`;
+    const statusSelect = `
+      <div class="relative inline-flex items-center">
+        <select 
+          data-klal-id="${item.id}" 
+          class="klal-status-select text-[10px] font-semibold rounded px-2 py-0.5 border cursor-pointer focus:outline-none transition ${
+            item.isActive 
+              ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40 hover:border-emerald-400' 
+              : item.isCompleted 
+              ? 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500' 
+              : 'bg-amber-950/60 text-amber-300 border-amber-500/40 hover:border-amber-400'
+          }"
+          title="Change initiative status and save directly to Sheet"
+        >
+          <option value="Active" ${item.isActive ? 'selected' : ''}>Active</option>
+          <option value="Backlog" ${item.isBacklog ? 'selected' : ''}>Backlog</option>
+          <option value="Completed" ${item.isCompleted ? 'selected' : ''}>Completed</option>
+        </select>
+      </div>
+    `;
 
     return `
       <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 space-y-2.5 hover:border-slate-700 transition shadow-sm">
@@ -761,7 +985,7 @@ function renderKlalInitiatives() {
             <h4 class="text-xs font-bold text-white leading-snug">${item.title}</h4>
             <div class="flex items-center gap-1.5 flex-wrap">
               ${badgeCategory}
-              ${statusBadge}
+              ${statusSelect}
               <span class="text-[10px] font-mono text-slate-400 flex items-center gap-1">
                 <i data-lucide="calendar" class="w-3 h-3 text-slate-500"></i>
                 ${item.targetTiming}
@@ -784,6 +1008,56 @@ function renderKlalInitiatives() {
       </div>
     `;
   }).join('');
+
+  // Attach status dropdown change listeners
+  elements.klalCardsContainer.querySelectorAll('.klal-status-select').forEach(select => {
+    select.addEventListener('change', async () => {
+      const klalId = select.dataset.klalId;
+      const item = state.data.klal.find(k => k.id === klalId);
+      if (!item) return;
+
+      const prevStatus = item.status;
+      const prevIsActive = item.isActive;
+      const prevIsCompleted = item.isCompleted;
+      const prevIsBacklog = item.isBacklog;
+
+      const newStatus = select.value;
+
+      // Optimistic update
+      item.status = newStatus;
+      item.isActive = newStatus.toLowerCase() === 'active';
+      item.isCompleted = newStatus.toLowerCase() === 'completed';
+      item.isBacklog = newStatus.toLowerCase() === 'backlog';
+
+      renderQuickStats();
+      renderKlalInitiatives();
+      DataService.saveCurrentStateToCache(state.data);
+
+      showToast(`Saving to Sheet: Updating ${item.title} to ${newStatus}...`, 'success', 2200);
+
+      try {
+        await DataService.sendDirectUpdate({
+          action: 'updateKlalStatus',
+          title: item.title,
+          status: newStatus
+        });
+        showToast(`✓ Updated '${item.title}' to ${newStatus}! Sheet updated.`, 'success');
+      } catch (err) {
+        console.error('Failed to update status:', err);
+        // Rollback
+        item.status = prevStatus;
+        item.isActive = prevIsActive;
+        item.isCompleted = prevIsCompleted;
+        item.isBacklog = prevIsBacklog;
+
+        renderQuickStats();
+        renderKlalInitiatives();
+        DataService.saveCurrentStateToCache(state.data);
+
+        showToast(`Could not update Klal status on Sheet: ${err.message}`, 'error', 5000);
+      }
+    });
+  });
 
   refreshIcons();
 }

@@ -148,3 +148,4 @@ Compose a warm, natural personal WhatsApp / SMS message to invite this Shana Bet
 
 Tone: Warm, low-pressure, welcoming, feeling like a natural personal invitation rather than an institutional check-off.`;
 }
+
